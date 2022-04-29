@@ -23,7 +23,19 @@ and have visualized the data using seaborn library. Along with the data analysis
 
 - Firstly, imported all the required libraries and uploaded the data set
    on google colab
-- Thereafter, saved the uploaded data set to a dataframe
+    ```sh
+    #Installing the pyspark and seaborn library
+    !pip install pyspark
+    !pip install seaborn
+    ```
+
+- Thereafter, saved the uploaded data set to a dataframe and started the spark session
+    ```sh
+    spark = (SparkSession.builder.config("spark.driver.memory","4g").config("spark.driver.maxResultSize", "4g").getOrCreate())
+
+    df = spark.read.csv(path='/content/games.csv', inferSchema=True, header=True)
+    ```
+
 - Executed EDA by using spark.sql() queries on the dataframe and 
   drawing necessary inferences from the data.
 - By running the queries successfully, I plotted line plots, pie charts,
@@ -35,12 +47,12 @@ and have visualized the data using seaborn library. Along with the data analysis
 
     ### Overview of the Queries
 
-    Query for Top 10 players playing Black
+    #### Query for Top 10 players playing Black
     ```sh
     q3 = spark.sql('''SELECT black_id, black_rating FROM Schema WHERE black_rating>2000 ORDER BY black_rating DESC''')
     q3.show(10)
     ```
-    Query for Plotting number of turns with white and black rating with Visualization using Seaborn
+    #### Query for Plotting number of turns with white and black rating with Visualization using Seaborn
 
     ```sh
     q14 = spark.sql('''SELECT black_rating, turns FROM Schema where black_rating<2000''').toPandas()
@@ -49,7 +61,7 @@ and have visualized the data using seaborn library. Along with the data analysis
 
     ```
 
-    Query for creatig a Pie chart for Registered Rated Players
+    #### Query for creatig a Pie chart for Registered Rated Players
 
     ```sh
     q26 = spark.sql('''SELECT rated from Schema where rated='TRUE' ''').count()
@@ -63,3 +75,43 @@ and have visualized the data using seaborn library. Along with the data analysis
     ```
 ## Analysis of the Solutions Obtained
 
+### Analysis for the Queries:
+
+- Performed Average, Min and Max for all the players based on their number of turns and found that most of the players fall that players with higher rating tend to play more number of turns with respect to lower rated players.
+- By plotting the number of turns for black and white rating, the inference could be drawn that number of turns increases approximately linearly with the player's rating.
+- The most popular opening played by all the players is the "Indian Game"
+- Calculated the count for all types of victory statuses. 
+
+    | victory_status      | count(victory_status)
+    | :---        |    :----:   
+    | draw      | 906       
+    | mate   | 6325    
+    | out of time      | 1680       
+    | resign   | 11147
+
+- The top 4 most popular increment type played on Lichess:
+    | increment_code      | count(increment_code)
+    | :---        |    :----:   
+    | 10+0      | 7721       
+    | 15+0   | 1311    
+    | 15_15      | 850       
+    | 5+5   | 738
+
+- Most of the players on Lichess lies in the rating between 1250 and 2000 based on the freqency distribution plotted. 
+
+
+    #### Example of Freqency Distribution Query for White Rated Players    
+    ```sh
+    #Frequency Distribution for White Rated Players
+    q23 = spark.sql('''SELECT white_rating from Schema ORDER BY white_rating ASC ''').toPandas()
+    sns.displot(q23).set_xlabels("White Rating").set_ylabels("Number of Players").set( title="Frequency Distribution for White Rated Players")
+    ```
+
+- 80.5% of the players on Lichess are rated and 19.5% players on Lichess are not rated.
+- Trained a model for predicting the effect of Winning Status based on Number of Turns and victory status using XGboost and DecisonTreeClassifier.
+
+    1. XGBoost Accuracy: 0.7808157099697886
+    Approximately 78% of the data is predicted by the model efficiently.
+
+    2. Decision Tree Classifier Accuracy: 0.899546827794562
+    Approximately 89.9% of the data is predicted by the model efficiently.
